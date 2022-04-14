@@ -5,8 +5,6 @@ Created on Thu Apr  1 14:13:23 2021
 @author: jon-f
 """
 
-
-from pdb import post_mortem
 import discord
 from discord.ext import commands
 import numpy as np
