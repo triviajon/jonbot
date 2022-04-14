@@ -6,6 +6,7 @@ Created on Thu Apr  1 14:13:23 2021
 """
 
 
+from pdb import post_mortem
 import discord
 from discord.ext import commands
 import numpy as np
@@ -16,13 +17,7 @@ from collections import OrderedDict
 from operator import getitem
 import lore_functions, point_functions, chances, norm
 
-def get_users():
-    try:
-        with open(usersfile) as file:
-            users = json.load(file)
-    except:
-        users = {}
-    return users
+
 
 bot = commands.Bot(command_prefix='*', description="this is jon's super cool bot")
 
@@ -37,7 +32,7 @@ async def cmds(ctx):
 async def level(ctx):
     auth = ctx.author
 
-    points = point_functions.add_points(auth)
+    points = point_functions.get_points(auth)
     level = point_functions.get_lvl(auth)
     
     response = f'You are level {level} with {points} points!'
@@ -90,14 +85,14 @@ async def reverse(ctx):
 @bot.command(help="Starts an instance of the number game! Think of a number and follow the bot's instructions after typing *numgame.", brief="Play the numgame!")
 async def numgame(ctx):
     
-    reply = chances.numbergame(ctx, bot)
+    reply = await chances.numbergame(ctx, bot)
     return reply
 
 @bot.command(help="Add an item to the lore database. To use, type *lore MM/DD/YYYY <message>", brief="Adds lore to the database")
 async def lore(ctx):
     msg = str(ctx.message.content)
     author = str(ctx.author)
-    reply = lore_functions.add_lore(msg, author, ctx)
+    reply = await lore_functions.add_lore(msg, author, ctx)
     await ctx.send(reply)
 
 
@@ -106,7 +101,7 @@ async def lookup(ctx):
 
     reader = csv.reader(open(datafile))
     async with ctx.typing():
-        reply = lore_functions.lookup(ctx, reader)
+        reply = await lore_functions.lookup(ctx, reader)
     await ctx.send(reply)
     
 @bot.command(help="Sets your level-up emoji to any custom emoji! To use, type *setemoji <emoji>", brief="Changes your level-up emoji!")
@@ -185,7 +180,7 @@ Answer choices:\n{answer_choices}Type the number of your answer!'
 @bot.command(help="Starts a gamble with your points! To play, type *gamble <points> <gamemode>. Current gamemodes: coin, russian.", brief="Gambles with your points!")
 async def gamble(ctx):
     full_msg = str(ctx.message.content)
-    reply = chances.game_gamble(full_msg, ctx, bot)    
+    reply = await chances.game_gamble(full_msg, ctx, bot)    
     await ctx.send(reply)
 
 @bot.command(help="Test if the bot is online. Type *ping", brief="Bot test")
@@ -201,17 +196,39 @@ async def roll(ctx):
     msg = str(ctx.message.content)
     reply = norm.roll(msg)
     await ctx.send(reply)
+
+@bot.command(help="ban hammar", brief="ban hammar")
+async def ban(ctx):
+    full_msg = str(ctx.message.content)
+    content = full_msg.split(" ")
+    
+    try:
+        content[1], content[2]
+    except:
+        ctx.send("Error: Command should be of form: *ban <@user> <status>")
+        return
+    
+    start_at = content[1].index("@") + 1
+    end_at = content[1].index(">")
+    user_to_ban = content[1][start_at:end_at]
+
+    status = 1 if content[2][0].lower() == "t" else 0 # checks to see if first letter is t
+
+    point_functions.set_ban_status(user_to_ban, status, use_id=True)
+
+    ctx.send("User banned from jonbot commands.")
+    return False
     
 @bot.command(help="Displays the current top 10 leaderboard. To use, type *leaderboards", brief="Displays top 10.")
 async def leaderboards(ctx):
-    ordered = OrderedDict(sorted(get_users().items(), 
+    ordered = OrderedDict(sorted(point_functions.get_users().items(), 
                              key = lambda x: getitem(x[1], 'points'), reverse=True))
     
     response = "**Top 10 Ranking:**"
     for i, user in enumerate(ordered):
         if i < 10:
             user = await bot.fetch_user(user)
-            response = response + "\n" + "          " + f"{i+1}. *{user.display_name}* - {point_functions.add_points(user)} points"
+            response = response + "\n" + "          " + f"{i+1}. *{user.display_name}* - {point_functions.get_points(user)} points"
         else:
             break
     await ctx.send(response)
@@ -220,25 +237,23 @@ async def leaderboards(ctx):
 async def play(ctx):
     def check(user):
         return user.author == ctx.author
-    chances.play(ctx, bot)
+    await chances.play(ctx, bot)
     await ctx.send("gg")
+
+@bot.command(help="Searches the last 15000 messages for ones sent by the quoted user (or self if none). Sends a random one.", brief="Sends a random messsage")
+async def toquote(ctx):
+    response, author = await chances.quote(ctx)
+    await ctx.send(f"To quote <@{author}>: {response}")
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Streaming(name="jon swags", url="https://twitch.tv/jonsaro/"))
     print("The bot is running!")
 
-
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return None
-    
-    if int(message.channel.id) in always_monitor:
-        if message.content.startswith('*lore') or message.content.startswith('*lookup'):
-            pass
-        else:
-           return None
         
     print(f'{message.author} updated point values!')
 
@@ -248,12 +263,10 @@ async def on_message(message):
         
     await bot.process_commands(message)
 
+with open('login.private', 'r') as file:
+    file_contents = file.read().split("\n")[:]
+    datafile, usersfile, triviafile, bot_key1 = file_contents[4:8]
+    if file_contents[8]:
+        bot_key2 = file_contents[8]
 
-datafile = 'jonbot.csv'
-usersfile = 'users.json'
-triviafile = 'trivia.json'
-always_monitor = (832872575704236062, 378739394909306901) # why is this here? see line 409
-
-
-bot.run('ODI3MjU3OTkwMjM1MDI5NTU0.YGYaCg.3zS81Lvr_oTP4SlkOZHtZ7VfIAs')
-# bot.run('Mzc4NzM4Nzg5Mzg1ODk1OTM2.WgZl_A.3Ge48SzNwIjzTUznxDdWimxhGnc')
+bot.run(bot_key2)

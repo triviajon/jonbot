@@ -5,6 +5,7 @@ Created on Fri Aug 27 10:21:45 2021
 @author: jon-f
 """
 
+from turtle import update
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 import os
@@ -14,9 +15,11 @@ import string
 import csv
 import lore_functions
 from discord import File
+from ftplib import FTP
 
-datafile = 'jonbot.csv'
-
+with open('login.private', 'r') as file:
+    file_contents = file.read().split("\n")[:]
+    datafile, usersfile, triviafile, bot_key1 = file_contents[4:8]
 
 # checks if msg is of format "-lore mm/dd/year text......"
 def isLoreFormat(msg):
@@ -154,14 +157,19 @@ async def add_lore(msg, author, ctx):
                 image = plt.imread(attachment.filename)
                 edgehex = lore_functions.image_to_edgehex(image)
                 os.remove(attachment.filename)
-                writer.writerow([author, msg[6:16], msg[17:].strip(), str(attachment.url), edgehex, UID])
-                return f"Added lore with **UID**={UID} to database with attachment!"
+                content = [author, msg[6:16], msg[17:].strip(), str(attachment.url), edgehex, UID]
+                writer.writerow(content)
+                return_msg = f"Added lore with **UID**={UID} to database with attachment!"
             else:
-                writer.writerow([author, msg[6:16], msg[17:].strip(), str(attachment.url), '', UID])
-                return "I didn't understand your attachment filetype. I have still saved it to the database though!"
+                content = [author, msg[6:16], msg[17:].strip(), str(attachment.url), '', UID]
+                writer.writerow(content)
+                return_msg =  "I didn't understand your attachment filetype. I have still saved it to the database though!"
         else:
-            writer.writerow([author, msg[6:16], msg[17:], '', '', UID])
-            return "Added lore with **UID**={UID} to database!"
+            content = [author, msg[6:16], msg[17:], '', '', UID]
+            writer.writerow(content)
+            return_msg = f"Added lore with **UID**={UID} to database!"
+    update_content(content)
+    return return_msg
 
 def word_mispell_iterator(word):
     mispells = []
@@ -287,3 +295,40 @@ async def lookup(ctx, reader):
     else:
         response = "Sorry, no items match your search."
     await ctx.send(response)
+
+def update_content(content, server_file='public_html/lore/index.html', login_file="login.private", temp_file="temp.html"):
+    def add_line(html_file, content_list):
+        add, date, detail, attach, edgehex, uid = content_list
+
+        if attach: attach = f"<a href={attach}> Attachment </a>"
+
+        with open(html_file, 'r') as file:
+            content = file.read()
+        
+        content = [elm.lstrip() for elm in content.split("\n")]
+        insert_add = content.index("</tbody>")
+
+        to_add = f"<tr> <td>{add}</td> <td>{date}</td> <td>{detail}</td> <td>{attach}</td> <td>{uid}</td></tr> \n"
+
+        content.insert(insert_add, to_add)
+
+        with open(html_file, 'w') as file:
+            file.write("\n".join(content))
+        return '\n'.join(content)
+    
+    with open(login_file, 'r') as file:
+        host, user, pw, port = file.read().split("\n")[0:4]
+    
+    if host.startswith("ftp://"): host = host[6:]
+
+    with FTP(host) as ftp:
+        ftp.login(user, pw)
+        spl = server_file.split("/")
+        for dir in spl[:-1]:
+            ftp.cwd(dir)
+        filename = spl[-1]
+        ftp.retrbinary(f"RETR {filename}", open(temp_file, "wb").write)
+        add_line(temp_file, content)
+        ftp.storbinary(f"STOR {filename}", open(temp_file, 'rb'))
+        print("added to online database")
+    return None

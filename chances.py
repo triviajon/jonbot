@@ -1,4 +1,5 @@
 import string
+import random
 import numpy as np
 import point_functions
 from discord.ext import commands
@@ -60,7 +61,7 @@ async def rr(author, point_amount, check, ctx, bot):
     rng = np.random.default_rng()
 
     multiplier = 6
-    point_functions.add_points(ctx.author, -1*point_amount)
+    point_functions.add_points(author, -1*point_amount)
     result = rng.integers(1, 6, endpoint=True)
     print(result)
     
@@ -349,3 +350,28 @@ async def numbergame(ctx, bot):
             break
         else:
             await ctx.send("Sorry, I did not understand your input.")
+
+async def quote(ctx):
+    
+    full_msg = str(ctx.message.content)
+    msg_content = full_msg.split(" ")
+
+    try:
+        msg_content[1]
+        start_at = msg_content[1].index("@") + 1
+        end_at = msg_content[1].index(">")
+        user_to_search = msg_content[1][start_at:end_at]
+    except:
+        user_to_search = ctx.author.id
+
+    async with ctx.channel.typing():
+        channel_messages = await ctx.channel.history(limit=1500).flatten()
+    
+    messages = []   
+    for message in channel_messages: 
+        print(message.author.id, user_to_search)
+        if int(message.author.id) == int(user_to_search):
+            messages.append(message.content)
+    
+    return random.choice(messages), user_to_search
+

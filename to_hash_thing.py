@@ -10,14 +10,6 @@ import matplotlib.pyplot as plt
 import os
 from skimage.transform import resize
 
-
-image1= 'D:/jon-f/Desktop/Pictures/jon transparent bg.png'
-image2 = 'D:/jon-f/Desktop/Pictures/jon_drawing.png'
-file1 = os.path.abspath(image1)
-file2 = os.path.abspath(image2)
-image_file1 = plt.imread(file1)
-image_file2 = plt.imread(file2)
-
 def binary_array_to_hex(arr):
 
 	bit_string = ''.join(str(int(b)) for b in arr.flatten())
@@ -83,6 +75,3 @@ def hamming_distance(hash1, hash2):
 def hash_match(hash1, hash2, percent_match=60):
     # returns True if at least percent_match % 
     return hamming_distance(hash1, hash2)/len(hash1) < percent_match/100
-
-hash1 = image_to_edgehex(image_file1)
-hash2 = image_to_edgehex(image_file2)
