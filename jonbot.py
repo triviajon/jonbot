@@ -195,7 +195,7 @@ async def roll(ctx):
     reply = norm.roll(msg)
     await ctx.send(reply)
 
-@bot.command(help="ban hammar", brief="ban hammar")
+@bot.command(help="ban hammar. to use, type *ban <@user> true/false", brief="ban hammar")
 async def ban(ctx):
     if int(ctx.author.id) != int(admin): 
         await ctx.send("You are not an admin!")
