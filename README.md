@@ -39,5 +39,6 @@ where the first three lines refer to the bot's feature to automatically update h
  6 users.json
  7 trivia.json
  8 <bot_key from discord dev portal>
- 9 <your discord id>
+ 9 
+ 10 <your discord id>
  ```
