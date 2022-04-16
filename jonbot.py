@@ -245,7 +245,7 @@ async def play(ctx):
 
 @bot.command(help="Searches the last 15000 messages for ones sent by the quoted user (or self if none). Sends a random one.", brief="Sends a random messsage")
 async def toquote(ctx):
-    response, author = await chances.quote(ctx)
+    response, author = await chances.quote(ctx, attempts=500)
     if not response:
         await ctx.send(f"Sorry, I tried REALLY hard and couldn't find a message. Try again!")
     else:
@@ -277,4 +277,4 @@ with open('login.private', 'r') as file:
     contents = file_contents[4:10]
     datafile, usersfile, triviafile, bot_key1, bot_key2, admin = [cont.strip('\n') for cont in contents]
     
-bot.run(bot_key2)
+bot.run(bot_key1)

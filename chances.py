@@ -358,12 +358,15 @@ async def quote(ctx, attempts=150):
     msg_content = full_msg.split(" ")
 
     try:
-        msg_content[1]
-        start_at = msg_content[1].index("@") + 1
-        end_at = msg_content[1].index(">")
-        user_to_search = msg_content[1][start_at:end_at]
+        user_to_search = ctx.message.mentions[0].id
     except:
-        user_to_search = ctx.author.id
+        try:
+            msg_content[1]
+            start_at = msg_content[1].index("@") + 1
+            end_at = msg_content[1].index(">")
+            user_to_search = msg_content[1][start_at:end_at]
+        except:
+            user_to_search = ctx.author.id
 
     async with ctx.channel.typing():
         end = dt.datetime.today() - dt.timedelta(days=1)
