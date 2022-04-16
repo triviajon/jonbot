@@ -34,13 +34,18 @@ def inv_curve(level):
         return 0
     return 10*(level-1)**2
 
+def add_user(id):
+    users = get_users()
+    users[id] = {}
+    users[id]["lvl"] = 0
+    users[id]["emoji"] = '<a:fatyoshi:878367303811608617>'
+    return id
+
 def add_points(user, points):
     users = get_users()
     id = str(user.id)
     if id not in users:
-        users[id] = {}
-        users[id]["lvl"] = 0
-        users[id]["emoji"] = '<a:fatyoshi:878367303811608617>'
+        add_user(id)
     
     curr_points = users[id].get("points", 0) + points
     users[id]["points"] = int(curr_points)
@@ -82,20 +87,28 @@ def get_levelup_emoji(user):
 
 def get_ban_status(user, use_id=False):
     if not use_id:
-        id = str(user.id)
+        user = str(user.id)
     users = get_users()
 
-    if users[id].get("ban", None) == None:
-        users[id]["ban"] = False
+    if user not in users:
+        add_user(user)
+
+    if users[user].get("ban", False) == False:
+        users[user]["ban"] = False
     
+    print(users[user])
+
     save_users()
-    return users[id]["ban"]
+    return users[user]["ban"]
 
 def set_ban_status(user, status, use_id=False):
     if not use_id:
-        id = str(user.id)
+        user = str(user.id)
     users = get_users()
 
-    users[id]["ban"] = status
+    if user not in users:
+        add_user(user)
+
+    users[user]["ban"] = status
     save_users()
     return status

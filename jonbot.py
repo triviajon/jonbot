@@ -197,6 +197,9 @@ async def roll(ctx):
 
 @bot.command(help="ban hammar", brief="ban hammar")
 async def ban(ctx):
+    if int(ctx.author.id) != int(admin): 
+        await ctx.send("You are not an admin!")
+        return None
     full_msg = str(ctx.message.content)
     content = full_msg.split(" ")
     
@@ -205,17 +208,19 @@ async def ban(ctx):
     except:
         ctx.send("Error: Command should be of form: *ban <@user> <status>")
         return
-    
-    start_at = content[1].index("@") + 1
-    end_at = content[1].index(">")
-    user_to_ban = content[1][start_at:end_at]
 
-    status = 1 if content[2][0].lower() == "t" else 0 # checks to see if first letter is t
+    user_to_ban = ctx.message.mentions[0]
 
-    point_functions.set_ban_status(user_to_ban, status, use_id=True)
+    print(user_to_ban.id, 'ban')
 
-    ctx.send("User banned from jonbot commands.")
-    return False
+    status = True if content[2][0].lower() == "t" else False # checks to see if first letter is t
+
+    point_functions.set_ban_status(user_to_ban, status)
+    if status:
+        await ctx.send("User banned from jonbot commands.")
+    else:
+        await ctx.send("User unbanned from jonbot commands.")
+    return None
     
 @bot.command(help="Displays the current top 10 leaderboard. To use, type *leaderboards", brief="Displays top 10.")
 async def leaderboards(ctx):
@@ -241,7 +246,10 @@ async def play(ctx):
 @bot.command(help="Searches the last 15000 messages for ones sent by the quoted user (or self if none). Sends a random one.", brief="Sends a random messsage")
 async def toquote(ctx):
     response, author = await chances.quote(ctx)
-    await ctx.send(f"To quote <@{author}>: {response}")
+    if not response:
+        await ctx.send(f"Sorry, I tried REALLY hard and couldn't find a message. Try again!")
+    else:
+        await ctx.send(f"To quote <@{author}>: {response}")
 
 @bot.event
 async def on_ready():
@@ -254,17 +262,19 @@ async def on_message(message):
         return None
         
     print(f'{message.author} updated point values!')
+    print(f"Message:", message.content)
 
     if point_functions.add_points(message.author, 1):
-        
         await message.channel.send(f'{message.author.mention} is now level {point_functions.get_lvl(message.author)}! {point_functions.get_levelup_emoji(message.author)}')
         
+    if point_functions.get_ban_status(message.author):
+        return None
+
     await bot.process_commands(message)
 
 with open('login.private', 'r') as file:
     file_contents = file.read().split("\n")[:]
-    datafile, usersfile, triviafile, bot_key1 = file_contents[4:8]
-    if file_contents[8]:
-        bot_key2 = file_contents[8]
-
+    contents = file_contents[4:10]
+    datafile, usersfile, triviafile, bot_key1, bot_key2, admin = [cont.strip('\n') for cont in contents]
+    
 bot.run(bot_key2)

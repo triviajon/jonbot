@@ -1,6 +1,7 @@
 import string
 import random
 import numpy as np
+import datetime as dt
 import point_functions
 from discord.ext import commands
 
@@ -351,8 +352,8 @@ async def numbergame(ctx, bot):
         else:
             await ctx.send("Sorry, I did not understand your input.")
 
-async def quote(ctx):
-    
+async def quote(ctx, attempts=150):
+
     full_msg = str(ctx.message.content)
     msg_content = full_msg.split(" ")
 
@@ -365,13 +366,13 @@ async def quote(ctx):
         user_to_search = ctx.author.id
 
     async with ctx.channel.typing():
-        channel_messages = await ctx.channel.history(limit=1500).flatten()
-    
-    messages = []   
-    for message in channel_messages: 
-        print(message.author.id, user_to_search)
-        if int(message.author.id) == int(user_to_search):
-            messages.append(message.content)
-    
-    return random.choice(messages), user_to_search
+        end = dt.datetime.today() - dt.timedelta(days=1)
 
+        for i in range(attempts):
+            start = dt.datetime.today() - dt.timedelta(days=random.randint(0, 365*2))
+            channel_messages = await ctx.channel.history(limit=100, before=end, after=start).flatten()   
+            for message in channel_messages: 
+                if int(message.author.id) == int(user_to_search):
+                    return message.content, user_to_search
+            
+        return False, user_to_search

@@ -317,7 +317,7 @@ def update_content(content, server_file='public_html/lore/index.html', login_fil
         return '\n'.join(content)
     
     with open(login_file, 'r') as file:
-        host, user, pw, port = file.read().split("\n")[0:4]
+        host, user, pw, _ = file.read().split("\n")[0:4]
     
     if host.startswith("ftp://"): host = host[6:]
 
