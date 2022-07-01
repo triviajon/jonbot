@@ -1,6 +1,7 @@
 # this is a file for normal functions
 # (ones that don't require an async call)
 import numpy as np
+from ftplib import FTP
 
 def roll(msg):
     """
