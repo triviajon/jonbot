@@ -258,6 +258,11 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    
+    if int(message.channel.id) == int(public_chan_id):
+        user, time, cont = message.author.display_name, str(message.created_at), message.content
+        norm.add_to_public([user, time, message])
+
     if message.author == bot.user:
         return None
         
@@ -274,7 +279,7 @@ async def on_message(message):
 
 with open('login.private', 'r') as file:
     file_contents = file.read().split("\n")[:]
-    contents = file_contents[4:10]
-    datafile, usersfile, triviafile, bot_key1, bot_key2, admin = [cont.strip('\n') for cont in contents]
+    contents = file_contents[4:11]
+    datafile, usersfile, triviafile, bot_key1, bot_key2, admin, public_chan_id = [cont.strip('\n') for cont in contents]
     
 bot.run(bot_key1)
